@@ -1,16 +1,30 @@
-import PropTypes from 'prop-types';
-import { Formik, ErrorMessage } from 'formik';
-import { Button, Input, Label, StyledForm } from './ContactForm.styled';
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getContacts } from 'redux/selectors';
-import { addContact } from 'redux/contactsSlice';
+import PropTypes from 'prop-types';
+import { Formik} from 'formik';
+import * as Yup from 'yup';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { selectIsLoading, selectVisibleContacts } from 'redux/selectors';
+import { addContact } from 'redux/contactsSlice';
+import { Button, Input, Label, StyledForm, StyledError } from './ContactForm.styled';
+import { Loader } from 'components/Loader';
 
 const defaultValues = {
   name: '',
   number: '',
 };
+
+const schema = Yup.object().shape({
+  name: Yup.string().required('Name is required'),
+  number: Yup.string()
+  .required('Phone numder is required')
+  .matches(
+    /^[\d()+-]+$/,
+    'Phone number must contain only 0-9 and these symbols: ( ) - +'
+  )
+  .min(8, 'Phone number must be at least 8 characters'),
+});
 
 export const ContactForm = () => {
   const dispatch = useDispatch();
