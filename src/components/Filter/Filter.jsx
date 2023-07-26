@@ -1,17 +1,17 @@
 import { Input } from './Filter.styled';
-import { getFilter } from 'redux/selectors';
+import { selectFilter } from 'redux/selectors';
 import { useDispatch, useSelector } from 'react-redux';
 import { setFilter } from 'redux/filterSlice';
 
 export const Filter = () => {
   const dispatch = useDispatch();
-  const filter = useSelector(getFilter);
+  const filter = useSelector(selectFilter);
 
   return (
     <Input
       type="text"
       value={filter}
-      onChange={event => dispatch(setFilter(event.target.value.trim()))}
+      onChange={e => dispatch(setFilter(e.target.value.trim()))}
     />
   );
 };

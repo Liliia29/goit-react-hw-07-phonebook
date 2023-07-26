@@ -1,28 +1,51 @@
-import { List, ListItem, Button, NoContacts } from './ContactList.styled';
-import { getContacts, getFilter } from 'redux/selectors';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { deleteContact } from 'redux/contactsSlice';
+import { List, ListItem, Button, NoContacts } from './ContactList.styled';
+import {
+  selectError,
+  selectIsLoading,
+  selectVisibleContacts,
+} from 'redux/selectors';
+import { deleteContact, fetchContacts } from 'redux/operations';
+import { Loader } from 'components/Loader';
 
 export const ContactList = () => {
-  const contacts = useSelector(getContacts);
-  const filter = useSelector(getFilter);
   const dispatch = useDispatch();
+  const visibleContacts = useSelector(selectVisibleContacts);
+  const isLoading = useSelector(selectIsLoading);
+  const error = useSelector(selectError);
+  const [contactToDeleteId, setContactToDeleteId] = useState(null);
 
-  const filteredContacts = contacts?.filter(contact =>
-    contact?.name?.toLowerCase().includes(filter.toLowerCase())
-  );
+  useEffect(() => {
+    dispatch(fetchContacts());
+  }, [dispatch]);
 
-  if (!filteredContacts?.length) {
+  if (!visibleContacts?.length && !error & !isLoading) {
     return <NoContacts>No contacts added yet.</NoContacts>;
+  }
+
+  if (error) {
+    return <p>{error}</p>;
   }
 
   return (
     <List>
-      {filteredContacts.map(({ id, name, number }, idx) => (
+      {visibleContacts.map(({ id, name, number }, idx) => (
         <ListItem key={id}>
           <div>{idx + 1}.</div>
           {name}: {number}
-          <Button onClick={() => dispatch(deleteContact(id))}>Delete</Button>
+          <Button
+            onClick={() => {
+              setContactToDeleteId(id);
+              dispatch(deleteContact(id)).then(() => {
+                setContactToDeleteId(null);
+              });
+            }}
+            disabled={isLoading && contactToDeleteId === id}
+          >
+            {contactToDeleteId === id && <Loader />}
+            Delete
+          </Button>
         </ListItem>
       ))}
     </List>
