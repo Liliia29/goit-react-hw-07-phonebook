@@ -6,7 +6,7 @@ import * as Yup from 'yup';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { selectIsLoading, selectVisibleContacts } from 'redux/selectors';
-import { addContact } from 'redux/contactsSlice';
+import { addContact } from 'redux/operations';
 import { Button, Input, Label, StyledForm, StyledError } from './ContactForm.styled';
 import { Loader } from 'components/Loader';
 
@@ -28,9 +28,12 @@ const schema = Yup.object().shape({
 
 export const ContactForm = () => {
   const dispatch = useDispatch();
-  const contacts = useSelector(getContacts);
+  const contacts = useSelector(selectVisibleContacts);
+  const isLoading = useSelector(selectIsLoading);
+  const [determineAddBtn, setDetermineAddBtn] = useState(false);
 
   const handleSubmitForm = (values, action) => {
+    setDetermineAddBtn(true);
     const isInContacts = contacts.some(
       ({ name }) => name.toLowerCase() === values.name.toLowerCase()
     );
@@ -39,36 +42,32 @@ export const ContactForm = () => {
       return toast.warn(`${values.name} is already in contacts.`);
     }
 
-    dispatch(addContact(values));
+    dispatch(addContact(values)).then(() => {
+      setDetermineAddBtn(false);
+    });
     action.resetForm();
   };
 
   return (
-    <Formik initialValues={defaultValues} onSubmit={handleSubmitForm}>
+    <Formik 
+    initialValues={defaultValues} 
+    onSubmit={handleSubmitForm}
+    validationSchema={schema}>
       <StyledForm>
         <Label>
           Name
-          <Input
-            type="text"
-            name="name"
-            pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
-            title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
-            required
-          />
-          <ErrorMessage name="name" component="div" />
+          <Input type="text" name="name" />
+          <StyledError name="name" component="div" />
         </Label>
         <Label>
           Number
-          <Input
-            type="tel"
-            name="number"
-            pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
-            title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
-            required
-          />
-          <ErrorMessage name="number" component="div" />
+          <Input type="tel" name="number" />
+          <StyledError name="number" component="div" />
         </Label>
-        <Button type="submit">Add Contact</Button>
+        <Button type="submit" disabled={isLoading && determineAddBtn}>
+          {isLoading && determineAddBtn && <Loader />}
+          Add Contact
+          </Button>
       </StyledForm>
     </Formik>
   );
